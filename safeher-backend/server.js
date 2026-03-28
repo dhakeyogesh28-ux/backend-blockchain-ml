@@ -8,7 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const turf = require('@turf/turf');
+const turfHelpers = require('@turf/helpers');
+const turfBuffer = require('@turf/buffer').default || require('@turf/buffer');
+const turfBooleanIntersects = require('@turf/boolean-intersects').default || require('@turf/boolean-intersects');
 const axios = require('axios');
 const polyline = require('@mapbox/polyline');
 const multer = require('multer');
@@ -404,7 +406,7 @@ app.post('/api/routes/safest', async (req, res) => {
             
             let safetyScore = 0;
             redZonePolygons.forEach(poly => {
-                if (turf.booleanIntersects(geoJson, poly)) {
+                if (turfBooleanIntersects(geoJson, poly)) {
                     safetyScore += (1.0 * nightMultiplier);
                 }
             });
@@ -468,8 +470,8 @@ const crimeHotspots = [
 
 // Convert hotspots to buffered polygons (Red Zones)
 const redZonePolygons = crimeHotspots.map(spot => {
-    const pt = turf.point([spot.lng, spot.lat]);
-    return turf.buffer(pt, 0.4, { units: 'kilometers' }); // 400m danger radius
+    const pt = turfHelpers.point([spot.lng, spot.lat]);
+    return turfBuffer(pt, 0.4, { units: 'kilometers' }); // 400m danger radius
 });
 
 
