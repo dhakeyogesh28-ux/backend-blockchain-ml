@@ -8,12 +8,10 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      - key: NODE_VERSION
-        value: ~18.18.0
       - key: PORT
-        value: 10000
+        value: '10000'
       - key: ML_SERVICE_URL
-        value: http://nivaran-ml:10000
+        value: 'http://nivaran-ml:10000'
 
   # ML FastAPI Service
   - type: web
@@ -25,5 +23,5 @@ services:
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.0
+        value: '3.10.0'
       # Add other necessary ML environment variables here
