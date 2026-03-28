@@ -12,7 +12,7 @@ services:
         value: '10000'
       - key: ML_SERVICE_URL
         value: 'http://nivaran-ml:10000'
-      - key: GRAPHHOPPER_API_KEY
+      - key: 28156721-1748-42b1-b398-5520e56d1893
         sync: false
 
   # ML FastAPI Service
