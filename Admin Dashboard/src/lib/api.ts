@@ -68,6 +68,21 @@ export const fetchSOSAlerts = async (): Promise<SOSAlert[]> => {
   }
 }
 
+export const fetchFIRs = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('firs')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as any[]
+  } catch (error) {
+    console.error('fetchFIRs error:', error)
+    return []
+  }
+}
+
 export const triggerSOS = async (data: Partial<SOSAlert>): Promise<SOSAlert> => {
   return (await api.post('/sos/trigger', data)).data
 }

@@ -466,10 +466,28 @@ const crimeHotspots = [
   { lat: 19.9400, lng: 73.8500, intensity: 0.6, type: 'Stalking', area: 'Deolali Camp' },
   { lat: 20.1000, lng: 73.9000, intensity: 0.55, type: 'Theft', area: 'Ojhar' },
   { lat: 19.7000, lng: 73.5500, intensity: 0.5, type: 'Harassment', area: 'Igatpuri' },
+  // Nagpur Hotspots
+  { lat: 21.1458, lng: 79.0882, intensity: 0.85, type: 'Mobbing', area: 'Sitabuldi' },
+  { lat: 21.1550, lng: 79.1050, intensity: 0.9, type: 'Theft', area: 'Itwari' },
+  { lat: 21.1520, lng: 79.0880, intensity: 0.9, type: 'Harassment', area: 'Nagpur Railway Station' },
+  { lat: 21.1600, lng: 79.0800, intensity: 0.75, type: 'Assault', area: 'Sadar' },
+  { lat: 21.0800, lng: 78.9900, intensity: 0.75, type: 'Robbery', area: 'Hingna MIDC' },
+  // Explicit Polygonal Zones (GeoJSON) - Demonstration for Nagpur
+  {
+    type: 'Polygon',
+    area: 'Sitabuldi Commercial Zone',
+    intensity: 0.9,
+    coordinates: [[
+      [79.0822, 21.1408], [79.0942, 21.1408], [79.0942, 21.1508], [79.0822, 21.1508], [79.0822, 21.1408]
+    ]]
+  }
 ];
 
-// Convert hotspots to buffered polygons (Red Zones)
+// Convert hotspots to Red Zones (Supports both Point-radius and explicit Polygons)
 const redZonePolygons = crimeHotspots.map(spot => {
+    if (spot.type === 'Polygon') {
+        return turfHelpers.polygon(spot.coordinates, { area: spot.area, intensity: spot.intensity });
+    }
     const pt = turfHelpers.point([spot.lng, spot.lat]);
     return turfBuffer(pt, 0.4, { units: 'kilometers' }); // 400m danger radius
 });

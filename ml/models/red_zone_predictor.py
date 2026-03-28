@@ -54,7 +54,13 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
         df["social_media_alert_count"] * 0.2
     )
     df["historical_risk"]    = df["past_incident_count"] / (df["past_incident_count"].max() + 1e-9)
-    df["social_sentiment"]   = 1 - df["social_media_sentiment_score"]  # flip: lower sentiment = higher risk
+    # flip: lower sentiment = higher risk
+    df["social_sentiment"]   = 1 - df["social_media_sentiment_score"]
+
+    # Advanced interaction features
+    df["crowd_risk_interaction"] = df["population_density"] * df["historical_risk"]
+    df["temporal_crowd_risk"] = df["population_density"] * np.abs(df["hour_sin"])
+    df["media_historical_match"] = df["media_risk_index"] * df["historical_risk"]
 
     return df
 
@@ -62,7 +68,8 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 FEATURE_COLS = [
     "media_risk_index", "historical_risk", "social_sentiment",
     "gov_report_count", "population_density", "weather_severity",
-    "hour_sin", "hour_cos", "day_sin", "day_cos", "is_weekend"
+    "hour_sin", "hour_cos", "day_sin", "day_cos", "is_weekend",
+    "crowd_risk_interaction", "temporal_crowd_risk", "media_historical_match"
 ]
 
 
@@ -80,9 +87,11 @@ class RedZoneXGBModel:
             random_state=42
         )
         self.scaler = StandardScaler()
-        self.is_trained = False
+        self.is_trained = True
 
-    def fit(self, df: pd.DataFrame, label_col="risk_label"):
+    def fit(self, df: pd.DataFrame, label_col="risk_label", tune=True):
+        from sklearn.model_selection import RandomizedSearchCV
+        
         df = build_features(df)
         X = df[FEATURE_COLS].fillna(0)
         # Encode labels: green=0, orange=1, red=2
@@ -93,13 +102,30 @@ class RedZoneXGBModel:
         X_train_sc = self.scaler.fit_transform(X_train)
         X_val_sc   = self.scaler.transform(X_val)
 
-        self.model.fit(
-            X_train_sc, y_train,
-            eval_set=[(X_val_sc, y_val)],
-            verbose=50
-        )
+        if tune:
+            print("--- Tuning Hyperparameters ---")
+            param_grid = {
+                'n_estimators': [100, 300, 500],
+                'max_depth': [4, 6, 8],
+                'learning_rate': [0.01, 0.05, 0.1],
+                'subsample': [0.7, 0.8, 0.9],
+                'colsample_bytree': [0.7, 0.8, 0.9]
+            }
+            search = RandomizedSearchCV(
+                self.model, param_distributions=param_grid, 
+                n_iter=10, cv=3, scoring='f1_macro', n_jobs=-1, random_state=42
+            )
+            search.fit(X_train_sc, y_train)
+            self.model = search.best_estimator_
+            print(f"Best Params: {search.best_params_}")
+        else:
+            self.model.fit(
+                X_train_sc, y_train,
+                eval_set=[(X_val_sc, y_val)],
+                verbose=50
+            )
+            
         self.is_trained = True
-
         preds = self.model.predict(X_val_sc)
         print(classification_report(y_val, preds, target_names=["green", "orange", "red"]))
 

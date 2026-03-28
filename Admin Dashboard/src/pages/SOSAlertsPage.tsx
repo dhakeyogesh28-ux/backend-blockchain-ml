@@ -310,20 +310,41 @@ const SOSAlertRow = forwardRef<HTMLDivElement, {
           )}
 
           {/* SOS Audio Recording */}
-          {hasAudio && (
-            <div className="mt-2 bg-black/20 p-2 rounded-lg border border-red-500/10" style={{ background: 'rgba(0,0,0,0.2)' }}>
-              <div className="text-xs text-gray-500 font-mono uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+          <div className="mt-2 bg-black/20 p-2 rounded-lg border border-red-500/10" style={{ background: 'rgba(0,0,0,0.2)' }}>
+            <div className="text-xs text-gray-500 font-mono uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
                 <Radio size={12} className={alert.status === 'active' ? 'text-red-500 animate-pulse' : 'text-gray-400'} /> 
-                SOS Audio Evidence
+                SOS Audio Evidence {alert.status === 'active' && '(Recording...)'}
               </div>
+              {alert.status !== 'active' && (
+                <button 
+                  onClick={() => {
+                    setHasAudio(false);
+                    setTimeout(() => setHasAudio(true), 100);
+                  }}
+                  className="text-[10px] text-blue-400 hover:text-blue-300 font-bold px-1.5 py-0.5 rounded border border-blue-400/20"
+                >
+                  RETRY
+                </button>
+              )}
+            </div>
+            {hasAudio ? (
               <audio 
                 controls 
+                key={`${alert.id}-${hasAudio}`}
                 className="w-full h-8 outline-none grayscale invert contrast-200" 
                 src={`${BASE}/uploads/${alert.id}.m4a`} 
-                onError={() => setHasAudio(false)}
+                onError={(e) => {
+                  // If SOS is active, the recording might not be uploaded yet, so we don't hide it immediately
+                  if (alert.status !== 'active') {
+                    // setHasAudio(false); // Only hide if definitely not there
+                  }
+                }}
               />
-            </div>
-          )}
+            ) : (
+              <div className="text-[10px] text-gray-700 italic py-2">No audio evidence found for this alert.</div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}

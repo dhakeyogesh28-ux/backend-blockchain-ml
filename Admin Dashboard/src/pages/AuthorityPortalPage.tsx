@@ -6,8 +6,8 @@ import {
   ThumbsUp, ThumbsDown, Download,
   User, Building, BadgeCheck
 } from 'lucide-react'
-import { fetchIncidents, fetchSOSAlerts } from '../lib/api'
-import type { Incident, SOSAlert } from '../types'
+import { fetchIncidents, fetchFIRs } from '../lib/api'
+import type { Incident } from '../types'
 
 const STATUS_TABS = ['pending_review', 'verified', 'rejected', 'all'] as const
 type ReviewStatus = typeof STATUS_TABS[number]
@@ -15,21 +15,22 @@ type ReviewStatus = typeof STATUS_TABS[number]
 interface FIRRecord {
   id: string
   fir_number: string
-  incident_id: string
+  incident_id?: string
   incident_type: string
-  status: 'filed' | 'under_investigation' | 'chargesheet_filed' | 'closed'
+  status: 'pending' | 'filed' | 'under_investigation' | 'chargesheet_filed' | 'closed'
   officer: string
   station: string
   filed_at: string
   description: string
   severity: string
-  lat: number
-  lng: number
+  lat?: number
+  lng?: number
+  user_email?: string
+  evidence_ids?: string[]
 }
 
-
-
 const statusColors: Record<string, string> = {
+  pending: '#f59e0b',
   filed: '#f59e0b',
   under_investigation: '#6366f1',
   chargesheet_filed: '#10b981',
@@ -40,6 +41,7 @@ const statusColors: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
+  pending: 'Pending Review',
   filed: 'Filed',
   under_investigation: 'Under Investigation',
   chargesheet_filed: 'Chargesheet Filed',
@@ -57,8 +59,21 @@ export default function AuthorityPortalPage() {
 
   useEffect(() => {
     setIsLoading(true)
-    fetchIncidents().then(data => {
-      setIncidents(data)
+    Promise.all([fetchIncidents(), fetchFIRs()]).then(([incData, firData]) => {
+      setIncidents(incData)
+      setFirs(firData.map(f => ({
+        id: f.id,
+        fir_number: f.id.substring(0, 8).toUpperCase(),
+        incident_type: f.crime_type || 'Unknown',
+        status: f.status || 'pending',
+        officer: 'Unassigned',
+        station: 'Pending Allocation',
+        filed_at: f.created_at,
+        description: f.incident_description || 'No description',
+        severity: 'High',
+        user_email: f.user_email,
+        evidence_ids: f.evidence_ids || []
+      })))
       setIsLoading(false)
     })
   }, [])
@@ -303,7 +318,7 @@ export default function AuthorityPortalPage() {
                   <span>Type: <span className="text-gray-300 capitalize">{fir.incident_type}</span></span>
                   <span>Severity: <span className="text-gray-300 capitalize">{fir.severity}</span></span>
                   <span className="flex items-center gap-1"><Clock size={11} />{new Date(fir.filed_at).toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1"><MapPin size={11} />{fir.lat.toFixed(4)}, {fir.lng.toFixed(4)}</span>
+                  <span className="flex items-center gap-1"><MapPin size={11} />{(fir.lat ?? 0).toFixed(4)}, {(fir.lng ?? 0).toFixed(4)}</span>
                 </div>
               </motion.div>
             ))}
