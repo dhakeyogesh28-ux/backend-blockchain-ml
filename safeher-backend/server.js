@@ -333,10 +333,9 @@ app.get('/api/blockchain/sos-logs', async (req, res) => {
 });
 
 // --- Safest Route Logic ---
-const GRAPHHOPPER_API_KEY = process.env.GRAPHHOPPER_API_KEY;
-
 app.post('/api/routes/safest', async (req, res) => {
     try {
+        const GRAPHHOPPER_API_KEY = process.env.GRAPHHOPPER_API_KEY;
         const { origin, destination } = req.body;
         console.log(`\n🚀 [ROUTE] Calculating path: "${origin}" → "${destination}"`);
 
