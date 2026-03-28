@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+__pycache__/
+*.pyc
+.env
+.idea/
+.vscode/
