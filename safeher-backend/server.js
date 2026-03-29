@@ -33,14 +33,14 @@ if (!fs.existsSync(path.join(__dirname, 'uploads'))) {
 }
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads'))
-  },
-  filename: function (req, file, cb) {
-    // We expect the log id in the body to use as the filename
-    const logId = req.body.logId || 'unknown_sos';
-    cb(null, logId + '.m4a')
-  }
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, 'uploads'))
+    },
+    filename: function (req, file, cb) {
+        // We expect the log id in the body to use as the filename
+        const logId = req.body.logId || 'unknown_sos';
+        cb(null, logId + '.m4a')
+    }
 });
 
 const upload = multer({ storage: storage });
@@ -104,9 +104,9 @@ app.post('/api/auth/signup', (req, res) => {
         console.log('--- /api/auth/signup called ---', req.body);
         const { wallet_address, name, phone, email } = req.body;
         if (!wallet_address) return res.status(400).json({ error: 'wallet_address is required' });
-        
+
         const address = wallet_address.toLowerCase();
-        
+
         // 1. Check if this wallet is already registered to SAME email (redundant but safe)
         if (usersDB.has(address)) {
             const existingUser = usersDB.get(address);
@@ -131,12 +131,12 @@ app.post('/api/auth/signup', (req, res) => {
             if (foundUser.wallet_address !== address) {
                 usersDB.delete(foundUser.wallet_address);
             }
-            
+
             foundUser.wallet_address = address;
             foundUser.name = name || foundUser.name;
             foundUser.phone = phone || foundUser.phone;
             foundUser.nonce = uuidv4();
-            
+
             usersDB.set(address, foundUser);
             saveDB();
             return res.json({ success: true, user: foundUser, message: 'Wallet updated' });
@@ -153,7 +153,7 @@ app.post('/api/auth/signup', (req, res) => {
         };
         usersDB.set(address, newUser);
         saveDB();
-        
+
         console.log(`Successfully registered new user: ${email} with wallet ${address}`);
         res.json({ success: true, user: newUser });
     } catch (e) {
@@ -167,7 +167,7 @@ app.post('/api/auth/nonce', (req, res) => {
         console.log('--- /api/auth/nonce called ---', req.body);
         const { wallet_address } = req.body;
         const address = wallet_address?.toLowerCase();
-        
+
         if (!address || !usersDB.has(address)) {
             console.log('User not found during nonce request for address:', wallet_address);
             return res.status(404).json({ error: 'User not found in usersDB. Have you signed up yet?' });
@@ -201,7 +201,7 @@ app.post('/api/auth/verify', (req, res) => {
 
         // Verify signature using ethers
         const recoveredAddress = ethers.verifyMessage(expectedNonce, signature);
-        
+
         if (recoveredAddress.toLowerCase() !== address) {
             return res.status(401).json({ error: 'Invalid signature' });
         }
@@ -213,8 +213,8 @@ app.post('/api/auth/verify', (req, res) => {
 
         // Issue JWT token
         const token = jwt.sign(
-            { wallet_address: address, sub: address }, 
-            JWT_SECRET, 
+            { wallet_address: address, sub: address },
+            JWT_SECRET,
             { expiresIn: '30d' }
         );
 
@@ -230,7 +230,7 @@ app.post('/api/blockchain/kyc', async (req, res) => {
         const userData = req.body;
         // 1. Generate SHA256 Hash
         const hash = generateHash(userData);
-        
+
         console.log(`Generating KYC hash: ${hash}`);
 
         // 2. Add to Blockchain if contract is deployed
@@ -262,7 +262,7 @@ app.post('/api/blockchain/sos', async (req, res) => {
         const sosData = req.body;
         // 1. Generate SHA256 Hash
         const hash = generateHash(sosData);
-        
+
         console.log(`Generating SOS hash: ${hash}`);
 
         // 2. Add to Blockchain if contract is deployed
@@ -303,14 +303,14 @@ app.post('/api/sos/trigger', async (req, res) => {
     try {
         const { userName, phone, emergencyContacts } = req.body;
         console.log(`\n🚨 SOS Relay Triggered for: ${userName} (${phone})`);
-        
+
         let results = [];
         if (emergencyContacts && emergencyContacts.length > 0) {
             // Twilio service removed.
             console.log(`[SOS] Calling ${primary.name} at ${primary.phone} (Disabled)`);
             results.push({ contact: primary.name, status: 'called_disabled', message: 'Calling service unavailable' });
         }
-        
+
         res.json({ success: true, message: 'SOS calling relay processed', results });
     } catch (e) {
         console.error('SOS Trigger error:', e);
@@ -373,10 +373,10 @@ app.post('/api/routes/safest', async (req, res) => {
 
         // --- Resolve origin & destination ---
         const isLatLng = (s) => /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(s.trim());
-        
+
         let orig, dest;
         try {
-            orig = isLatLng(origin)      ? parseLatLng(origin)      : await geocode(origin);
+            orig = isLatLng(origin) ? parseLatLng(origin) : await geocode(origin);
             dest = isLatLng(destination) ? parseLatLng(destination) : await geocode(destination);
             console.log(`✅ [GEO] Resolved: [${orig.lat},${orig.lng}] → [${dest.lat},${dest.lng}]`);
         } catch (geoErr) {
@@ -386,7 +386,7 @@ app.post('/api/routes/safest', async (req, res) => {
 
         // --- Call GraphHopper Routing API ---
         console.log(`🗺️  GraphHopper: [${orig.lat},${orig.lng}] → [${dest.lat},${dest.lng}]`);
-        
+
         const searchParams = new URLSearchParams();
         searchParams.append('point', `${orig.lat},${orig.lng}`);
         searchParams.append('point', `${dest.lat},${dest.lng}`);
@@ -397,7 +397,7 @@ app.post('/api/routes/safest', async (req, res) => {
         searchParams.append('algorithm', 'alternative_route');
         searchParams.append('alternative_route.max_paths', '3');
         searchParams.append('key', GRAPHHOPPER_API_KEY);
-        
+
         const ghRes = await axios.get(`https://graphhopper.com/api/1/route?${searchParams.toString()}`, {
             timeout: 15000
         });
@@ -412,13 +412,13 @@ app.post('/api/routes/safest', async (req, res) => {
 
         // --- Analyse each path for safety ---
         const analyzed = paths.map((path, index) => {
-            const coords  = path.points.coordinates; // [[lng, lat], ...]
+            const coords = path.points.coordinates; // [[lng, lat], ...]
             const geoJson = { type: 'LineString', coordinates: coords };
-            
+
             const hour = new Date().getHours();
             const isNight = hour >= 20 || hour < 6;
             const nightMultiplier = isNight ? 2.2 : 1.0;
-            
+
             let safetyScore = 0;
             redZonePolygons.forEach(poly => {
                 if (turfBooleanIntersects(geoJson, poly)) {
@@ -427,19 +427,19 @@ app.post('/api/routes/safest', async (req, res) => {
             });
             return {
                 index,
-                summary:     path.description || `Route ${index + 1}`,
+                summary: path.description || `Route ${index + 1}`,
                 safetyScore,
-                isSafe:      safetyScore === 0,
-                distanceKm:  (path.distance / 1000).toFixed(1),
+                isSafe: safetyScore === 0,
+                distanceKm: (path.distance / 1000).toFixed(1),
                 durationMin: Math.round(path.time / 60000),
                 // Flutter needs { latitude, longitude }
                 path: coords.map(c => ({ latitude: c[1], longitude: c[0] })),
                 instructions: (path.instructions || []).map(step => ({
                     instruction: step.text,
-                    distance:    step.distance < 1000
-                                    ? `${Math.round(step.distance)}m`
-                                    : `${(step.distance / 1000).toFixed(1)}km`,
-                    isSafeZone:  true,
+                    distance: step.distance < 1000
+                        ? `${Math.round(step.distance)}m`
+                        : `${(step.distance / 1000).toFixed(1)}km`,
+                    isSafeZone: true,
                 })),
             };
         });
@@ -450,62 +450,62 @@ app.post('/api/routes/safest', async (req, res) => {
         console.log(`✅ Safest: ${safest.path.length} pts, score ${safest.safetyScore}, ${safest.distanceKm}km, ${safest.durationMin}min`);
 
         res.json({
-            success:           true,
-            source:            'GraphHopper',
-            safestRoute:       safest,
-            status:            safest.isSafe ? 'Safe' : 'Risky',
+            success: true,
+            source: 'GraphHopper',
+            safestRoute: safest,
+            status: safest.isSafe ? 'Safe' : 'Risky',
             alternativeRoutes: analyzed.slice(1),
         });
 
     } catch (error) {
         const errorDetail = error.response?.data || error.message;
         console.error('❌ [ROUTE ERROR]:', errorDetail);
-        
+
         // Provide cleaner error msg to frontend
-        const displayMsg = typeof errorDetail === 'object' 
-            ? (errorDetail.message || JSON.stringify(errorDetail)) 
+        const displayMsg = typeof errorDetail === 'object'
+            ? (errorDetail.message || JSON.stringify(errorDetail))
             : errorDetail;
-            
-        res.status(500).json({ 
-            success: false, 
-            error: displayMsg 
+
+        res.status(500).json({
+            success: false,
+            error: displayMsg
         });
     }
 });
 const crimeHotspots = [
-  { lat: 19.9975, lng: 73.7898, intensity: 0.8, type: 'Theft', area: 'College Road' },
-  { lat: 20.0059, lng: 73.7654, intensity: 0.7, type: 'Harassment', area: 'Gangapur Road' },
-  { lat: 19.9950, lng: 73.7860, intensity: 0.9, type: 'Assault', area: 'CBS' },
-  { lat: 20.0110, lng: 73.7900, intensity: 0.6, type: 'Stalking', area: 'Panchavati' },
-  { lat: 19.9600, lng: 73.8300, intensity: 0.85, type: 'Robbery', area: 'Nashik Road' },
-  { lat: 19.9900, lng: 73.8000, intensity: 0.75, type: 'Chain Snatching', area: 'Dwarka' },
-  { lat: 19.9700, lng: 73.7700, intensity: 0.7, type: 'Theft', area: 'Indira Nagar' },
-  { lat: 19.9905, lng: 73.7300, intensity: 0.8, type: 'Assault', area: 'Satpur MIDC' },
-  { lat: 19.9500, lng: 73.7500, intensity: 0.75, type: 'Harassment', area: 'Ambad MIDC' },
-  { lat: 20.0200, lng: 73.7800, intensity: 0.65, type: 'Suspicious Activity', area: 'Makhmalabad Road' },
-  { lat: 19.9500, lng: 73.7800, intensity: 0.7, type: 'Theft', area: 'Pathardi Phata' },
-  { lat: 20.0300, lng: 73.8000, intensity: 0.6, type: 'Harassment', area: 'Adgaon' },
-  { lat: 19.9800, lng: 73.7700, intensity: 0.7, type: 'Robbery', area: 'Trimurti Chowk' },
-  { lat: 19.9955, lng: 73.7805, intensity: 0.85, type: 'Theft', area: 'Canada Corner' },
-  { lat: 19.9980, lng: 73.7850, intensity: 0.75, type: 'Assault', area: 'Shalimar' },
-  { lat: 19.9400, lng: 73.8500, intensity: 0.6, type: 'Stalking', area: 'Deolali Camp' },
-  { lat: 20.1000, lng: 73.9000, intensity: 0.55, type: 'Theft', area: 'Ojhar' },
-  { lat: 19.7000, lng: 73.5500, intensity: 0.5, type: 'Harassment', area: 'Igatpuri' },
-  // Nagpur Hotspots
-  { lat: 21.1458, lng: 79.0882, intensity: 0.85, type: 'Mobbing', area: 'Sitabuldi' },
-  { lat: 21.1550, lng: 79.1050, intensity: 0.9, type: 'Theft', area: 'Itwari' },
-  { lat: 21.1520, lng: 79.0880, intensity: 0.9, type: 'Harassment', area: 'Nagpur Railway Station' },
-  { lat: 21.1600, lng: 79.0800, intensity: 0.75, type: 'Assault', area: 'Sadar' },
-  { lat: 21.0800, lng: 78.9900, intensity: 0.75, type: 'Robbery', area: 'Hingna MIDC' },
-  // Explicit Polygonal Zones (GeoJSON) - Demonstration for Nagpur
-  {
-    type: 'Polygon',
-    area: 'Sitabuldi Commercial Zone',
-    intensity: 0.9,
-    coordinates: [[
-      [79.0822, 21.1408], [79.0942, 21.1408], [79.0942, 21.1508], [79.0822, 21.1508], [79.0822, 21.1408]
-    ]]
-  }
+    { lat: 19.9975, lng: 73.7898, intensity: 0.8, type: 'Theft', area: 'College Road' },
+    { lat: 20.0059, lng: 73.7654, intensity: 0.7, type: 'Harassment', area: 'Gangapur Road' },
+    { lat: 19.9950, lng: 73.7860, intensity: 0.9, type: 'Assault', area: 'CBS' },
+    { lat: 20.0110, lng: 73.7900, intensity: 0.6, type: 'Stalking', area: 'Panchavati' },
+    { lat: 19.9600, lng: 73.8300, intensity: 0.85, type: 'Robbery', area: 'Nashik Road' },
+    { lat: 19.9900, lng: 73.8000, intensity: 0.75, type: 'Chain Snatching', area: 'Dwarka' },
+    { lat: 19.9700, lng: 73.7700, intensity: 0.7, type: 'Theft', area: 'Indira Nagar' },
+    { lat: 19.9905, lng: 73.7300, intensity: 0.8, type: 'Assault', area: 'Satpur MIDC' },
+    { lat: 19.9500, lng: 73.7500, intensity: 0.75, type: 'Harassment', area: 'Ambad MIDC' },
+    { lat: 20.0200, lng: 73.7800, intensity: 0.65, type: 'Suspicious Activity', area: 'Makhmalabad Road' },
+    { lat: 19.9500, lng: 73.7800, intensity: 0.7, type: 'Theft', area: 'Pathardi Phata' },
+    { lat: 20.0300, lng: 73.8000, intensity: 0.6, type: 'Harassment', area: 'Adgaon' },
+    { lat: 19.9800, lng: 73.7700, intensity: 0.7, type: 'Robbery', area: 'Trimurti Chowk' },
+    { lat: 19.9955, lng: 73.7805, intensity: 0.85, type: 'Theft', area: 'Canada Corner' },
+    { lat: 19.9980, lng: 73.7850, intensity: 0.75, type: 'Assault', area: 'Shalimar' },
+    { lat: 19.9400, lng: 73.8500, intensity: 0.6, type: 'Stalking', area: 'Deolali Camp' },
+    { lat: 20.1000, lng: 73.9000, intensity: 0.55, type: 'Theft', area: 'Ojhar' },
+    { lat: 19.7000, lng: 73.5500, intensity: 0.5, type: 'Harassment', area: 'Igatpuri' },
+    // Nagpur Hotspots
+    { lat: 21.1458, lng: 79.0882, intensity: 0.85, type: 'Mobbing', area: 'Sitabuldi' },
+    { lat: 21.1550, lng: 79.1050, intensity: 0.9, type: 'Theft', area: 'Itwari' },
+    { lat: 21.1520, lng: 79.0880, intensity: 0.9, type: 'Harassment', area: 'Nagpur Railway Station' },
+    { lat: 21.1600, lng: 79.0800, intensity: 0.75, type: 'Assault', area: 'Sadar' },
+    { lat: 21.0800, lng: 78.9900, intensity: 0.75, type: 'Robbery', area: 'Hingna MIDC' },
+    // Explicit Polygonal Zones (GeoJSON) - Demonstration for Nagpur
+    {
+        type: 'Polygon',
+        area: 'Sitabuldi Commercial Zone',
+        intensity: 0.9,
+        coordinates: [[
+            [79.0822, 21.1408], [79.0942, 21.1408], [79.0942, 21.1508], [79.0822, 21.1508], [79.0822, 21.1408]
+        ]]
+    }
 ];
 
 // Convert hotspots to Red Zones (Supports both Point-radius and explicit Polygons)
@@ -536,24 +536,24 @@ app.get('/api/night-mode/status', (req, res) => {
 app.post('/api/night-mode/check-in', (req, res) => {
     const { userId, lat, lng, type } = req.body;
     console.log(`[NightMode] Check-in from ${userId} at ${lat},${lng} (${type})`);
-    
+
     if (!nightCheckIns.has(userId)) nightCheckIns.set(userId, []);
     const history = nightCheckIns.get(userId);
     history.push({ lat, lng, type, timestamp: new Date().toISOString() });
-    
+
     res.json({ success: true, message: 'Check-in logged' });
 });
 
 app.post('/api/night-mode/buddy-track', (req, res) => {
     const { userId, contactName, contactPhone, status } = req.body;
     console.log(`[NightMode] Buddy track ${status} for ${userId} with ${contactName}`);
-    
+
     if (status === 'started') {
         buddyTracks.set(userId, { contactName, contactPhone, startTime: new Date().toISOString() });
     } else {
         buddyTracks.delete(userId);
     }
-    
+
     res.json({ success: true, message: `Buddy tracking ${status}` });
 });
 
@@ -650,8 +650,8 @@ app.get('/api/ml/health', async (req, res) => {
             return res.json({ success: false, ml_connected: false });
         }
         const { data } = await axios.get(
-            (process.env.ML_SERVICE_URL || 'http://localhost:8000') + '/health',
-            { timeout: 5000 }
+            (process.env.ML_SERVICE_URL || 'https://nivaran-ml.onrender.com') + '/health',
+            { timeout: 60000 }
         );
         res.json({ success: true, ml_connected: true, ...data });
     } catch (error) {
