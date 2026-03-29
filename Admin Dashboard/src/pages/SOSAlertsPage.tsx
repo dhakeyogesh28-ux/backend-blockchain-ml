@@ -280,6 +280,7 @@ const SOSAlertRow = forwardRef<HTMLDivElement, {
               <Clock size={10} className="text-gray-600" />
               <span className="text-xs font-mono text-gray-400">
                 {format(new Date(alert.created_at), 'dd MMM, HH:mm:ss')}
+                <span className="text-[10px] text-gray-600 ml-1 font-bold">IST</span>
                 <span className="text-gray-600 ml-1.5">
                   ({formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })})
                 </span>
@@ -333,7 +334,7 @@ const SOSAlertRow = forwardRef<HTMLDivElement, {
                 controls 
                 key={`${alert.id}-${hasAudio}`}
                 className="w-full h-8 outline-none grayscale invert contrast-200" 
-                src={`${BASE}/uploads/${alert.id}.m4a`} 
+                src={(alert as any).audio_url || `${BASE}/uploads/${alert.id}.m4a`} 
                 onError={(e) => {
                   // If SOS is active, the recording might not be uploaded yet, so we don't hide it immediately
                   if (alert.status !== 'active') {

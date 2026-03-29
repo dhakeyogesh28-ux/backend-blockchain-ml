@@ -114,6 +114,36 @@ export const patchIncident = async (id: string, data: Partial<Incident>): Promis
   return updated
 }
 
+const nameCache: Record<string, string> = {}
+const namePromises: Record<string, Promise<string>> = {}
+
+export const getUserName = async (email: string): Promise<string> => {
+  if (!email) return ''
+  if (email in nameCache) return nameCache[email]
+  if (email in namePromises) return namePromises[email]
+  
+  namePromises[email] = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name')
+        .eq('email', email)
+        .maybeSingle()
+      
+      if (data?.name) {
+        nameCache[email] = data.name
+        return data.name
+      }
+      return ''
+    } catch (err) {
+      console.error('Error fetching real name:', err)
+      return ''
+    }
+  })()
+    
+  return namePromises[email]
+}
+
 export const fetchAISummary = async (zoneId: string): Promise<{ summary: string }> => {
   try {
     return (await api.get(`/ai/zone-summary?zone_id=${zoneId}`)).data

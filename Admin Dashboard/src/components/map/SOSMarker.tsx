@@ -4,7 +4,7 @@ import L from 'leaflet'
 import { format } from 'date-fns'
 import { Navigation, CheckCircle } from 'lucide-react'
 import type { SOSAlert } from '../../types'
-import { supabase } from '../../lib/supabase'
+import { getUserName } from '../../lib/api'
 
 const createSOSIcon = () => L.divIcon({
   className: '',
@@ -46,23 +46,14 @@ export function SOSMarker({ alert, isNew, onNavigate, onResolve }: Props) {
     async function fetchRealName() {
       const email = alert.user_email || (alert as any).email
       if (displayName === 'Unknown User' && email) {
-        try {
-          const { data, error } = await supabase
-            .from('users')
-            .select('name')
-            .eq('email', email)
-            .maybeSingle()
-          
-          if (data?.name) {
-            setDisplayName(data.name)
-          }
-        } catch (err) {
-          console.error('Error fetching real name:', err)
+        const realName = await getUserName(email)
+        if (realName) {
+          setDisplayName(realName)
         }
       }
     }
     fetchRealName()
-  }, [initialName, (alert as any).user_email])
+  }, [initialName, alert])
 
   if (!lat || !lng) return null
 

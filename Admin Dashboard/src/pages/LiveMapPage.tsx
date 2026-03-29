@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, forwardRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer, Circle, Popup, Polyline } from 'react-leaflet'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,7 +8,7 @@ import {
   Zap, Network, RefreshCw, Clock
 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
-import { fetchHeatmap, fetchSOSAlerts, fetchStats, fetchIncidents, triggerSOS, resolveSOSAlert } from '../lib/api'
+import { fetchHeatmap, fetchSOSAlerts, fetchStats, fetchIncidents, triggerSOS, resolveSOSAlert, getUserName } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { SOSMarker, MapController } from '../components/map/SOSMarker'
 import { IncidentMarker } from '../components/map/IncidentMarker'
@@ -20,6 +20,7 @@ const CITIES = [
   { name: 'Nashik', center: [19.9975, 73.7898] as [number, number], zoom: 13 },
   { name: 'Mumbai', center: [19.076, 72.8777] as [number, number], zoom: 12 },
   { name: 'Pune', center: [18.5204, 73.8567] as [number, number], zoom: 13 },
+  { name: 'Nagpur', center: [21.1458, 79.0882] as [number, number], zoom: 13 },
 ]
 
 const TIME_FILTERS = ['1h', '6h', '24h', '7d'] as const
@@ -430,7 +431,7 @@ function StatsSidebar({ activeSOS }: { activeSOS: SOSAlert[] }) {
   )
 }
 
-function SOSSidebarItem({ alert }: { alert: SOSAlert }) {
+const SOSSidebarItem = forwardRef<HTMLDivElement, { alert: SOSAlert }>(({ alert }, ref) => {
   const initialName = alert.user_name || (alert as any).name || 'Unknown User'
   const [displayName, setDisplayName] = useState(initialName)
   const eType = alert.emergency_type || (alert as any).type || 'other'
@@ -439,26 +440,18 @@ function SOSSidebarItem({ alert }: { alert: SOSAlert }) {
     async function fetchRealName() {
       const email = alert.user_email || (alert as any).email
       if (displayName === 'Unknown User' && email) {
-        try {
-          const { data } = await supabase
-            .from('users')
-            .select('name')
-            .eq('email', email)
-            .maybeSingle()
-          
-          if (data?.name) {
-            setDisplayName(data.name)
-          }
-        } catch (err) {
-          console.error('Error fetching real name:', err)
+        const realName = await getUserName(email)
+        if (realName) {
+          setDisplayName(realName)
         }
       }
     }
     fetchRealName()
-  }, [initialName, (alert as any).user_email])
+  }, [initialName, alert])
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, x: 20, height: 0 }}
       animate={{ opacity: 1, x: 0, height: 'auto' }}
       exit={{ opacity: 0, x: -20, height: 0 }}
@@ -493,4 +486,4 @@ function SOSSidebarItem({ alert }: { alert: SOSAlert }) {
       </div>
     </motion.div>
   )
-}
+})

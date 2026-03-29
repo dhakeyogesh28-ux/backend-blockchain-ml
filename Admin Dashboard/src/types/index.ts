@@ -5,12 +5,15 @@ export interface SOSAlert {
   user_phone?: string
   lat: number
   lng: number
+  latitude?: number
+  longitude?: number
   emergency_type: 'medical' | 'fire' | 'crime' | 'accident' | 'other'
   status: 'active' | 'resolved' | 'false_alarm'
   mesh_path: string[] // e.g. ["Device_A", "Device_B", "Gateway"]
   created_at: string
   resolved_at?: string
   notes?: string
+  audio_url?: string
 }
 
 export interface Incident {
