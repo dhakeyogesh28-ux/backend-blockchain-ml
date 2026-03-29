@@ -19,6 +19,20 @@ api.interceptors.request.use(cfg => {
 
 
 // ─── API Calls ─────────────────────────────────────────────────────────────
+export const fetchUsersList = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('fetchUsersList error:', error)
+    return []
+  }
+}
+
 export const fetchHeatmap = async (radius_km = 20): Promise<HeatmapPoint[]> => {
   try {
     const { data, error } = await supabase.from('incidents').select('lat, lng, risk_score')
@@ -252,16 +266,19 @@ export const fetchStats = async (): Promise<DashboardStats> => {
     const { count: sosCount, error: sosErr } = await supabase.from('sos_logs').select('*', { count: 'exact', head: true }).eq('status', 'active')
     const { count: incCount, error: incErr } = await supabase.from('incidents').select('*', { count: 'exact', head: true }).gt('created_at', yesterday)
     const { count: meshCount, error: meshErr } = await supabase.from('mesh_nodes').select('*', { count: 'exact', head: true }).eq('status', 'active')
+    const { count: userCount, error: userErr } = await supabase.from('users').select('*', { count: 'exact', head: true })
 
     if (sosErr) console.warn('sos_logs count error:', sosErr.message)
     if (incErr) console.warn('incidents count error:', incErr.message)
     if (meshErr) console.warn('mesh_nodes count error:', meshErr.message)
+    if (userErr) console.warn('users count error:', userErr.message)
 
     return {
       active_sos: sosCount || 0,
       incidents_24h: incCount || 0,
       high_risk_zones: 3, 
       mesh_nodes_active: meshCount || 4, 
+      total_users: userCount || 0,
     }
   } catch (error) {
     console.error('fetchStats error:', error)
@@ -269,7 +286,8 @@ export const fetchStats = async (): Promise<DashboardStats> => {
       active_sos: 0,
       incidents_24h: 0,
       high_risk_zones: 0,
-      mesh_nodes_active: 0
+      mesh_nodes_active: 0,
+      total_users: 0
     }
   }
 }

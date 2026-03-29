@@ -4,7 +4,7 @@ import { useAppStore } from '../store/useAppStore'
 import {
   MapPin, AlertTriangle, BarChart2, Radio,
   Shield, LogOut, Activity, Wifi, Database, Building,
-  Link2, Brain
+  Users, Brain
 } from 'lucide-react'
 
 const NAV = [
@@ -14,7 +14,7 @@ const NAV = [
   { to: '/sos', icon: Radio, label: 'SOS Alerts' },
   { to: '/data-ingestion', icon: Database, label: 'Data Ingestion' },
   { to: '/authority', icon: Building, label: 'Authority Portal' },
-  { to: '/blockchain', icon: Link2, label: 'Blockchain' },
+  { to: '/users', icon: Users, label: 'Users' },
   { to: '/ml-predictions', icon: Brain, label: 'ML Predictions' },
   { to: '/chat', icon: Radio, label: 'Broadcast Chat' },
 ]

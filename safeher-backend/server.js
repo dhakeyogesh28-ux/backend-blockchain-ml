@@ -224,6 +224,16 @@ app.post('/api/auth/verify', (req, res) => {
     }
 });
 
+app.get('/api/users', (req, res) => {
+    try {
+        const usersList = Array.from(usersDB.values());
+        res.json({ success: true, users: usersList });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+
 // --- Blockchain Event Routes ---
 app.post('/api/blockchain/kyc', async (req, res) => {
     try {
@@ -656,6 +666,44 @@ app.get('/api/ml/health', async (req, res) => {
         res.json({ success: true, ml_connected: true, ...data });
     } catch (error) {
         res.json({ success: false, ml_connected: false, error: error.message });
+    }
+});
+
+// --- AI Completion Proxy ---
+app.post('/api/ai/chat', async (req, res) => {
+    try {
+        const apiKey = process.env.OPENROUTER_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'AI Service configuration missing (API Key)' });
+        }
+
+        const { model, messages, max_tokens, temperature } = req.body;
+        
+        console.log(`[AI] Dispatching request to OpenRouter for model: ${model || 'default'}`);
+
+        const response = await axios.post(
+            'https://openrouter.ai/api/v1/chat/completions',
+            {
+                model: model || 'openai/gpt-4o-mini',
+                messages: messages,
+                max_tokens: max_tokens || 1000,
+                temperature: temperature || 0.7,
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://nivaran.app',
+                    'X-Title': 'Nivaran',
+                },
+                timeout: 60000
+            }
+        );
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('[AI] Proxy Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json(error.response?.data || { error: error.message });
     }
 });
 

@@ -9,7 +9,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import SOSAlertsPage from './pages/SOSAlertsPage'
 import AuthorityPortalPage from './pages/AuthorityPortalPage'
 import DataIngestionPage from './pages/DataIngestionPage'
-import BlockchainPage from './pages/BlockchainPage'
+import UsersPage from './pages/UsersPage'
 import MLPredictionsPage from './pages/MLPredictionsPage'
 import ChatPage from './pages/ChatPage'
 
@@ -37,7 +37,7 @@ export default function App() {
           <Route path="sos" element={<SOSAlertsPage />} />
           <Route path="data-ingestion" element={<DataIngestionPage />} />
           <Route path="authority" element={<AuthorityPortalPage />} />
-          <Route path="blockchain" element={<BlockchainPage />} />
+          <Route path="users" element={<UsersPage />} />
           <Route path="ml-predictions" element={<MLPredictionsPage />} />
           <Route path="chat" element={<ChatPage />} />
         </Route>

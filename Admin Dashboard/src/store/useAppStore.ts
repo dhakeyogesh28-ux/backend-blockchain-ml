@@ -74,7 +74,7 @@ export const useAppStore = create<AppStore>((set) => ({
     incidents: s.incidents.map(i => i.id === id ? { ...i, ...data } : i)
   })),
 
-  stats: { active_sos: 0, incidents_24h: 0, high_risk_zones: 0, mesh_nodes_active: 0 },
+  stats: { active_sos: 0, incidents_24h: 0, high_risk_zones: 0, mesh_nodes_active: 0, total_users: 0 },
   setStats: (s) => set({ stats: s }),
 
   meshRelayVisible: false,

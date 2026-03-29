@@ -71,6 +71,7 @@ export interface DashboardStats {
   incidents_24h: number
   high_risk_zones: number
   mesh_nodes_active: number
+  total_users: number
 }
 
 export interface AnalyticsData {
