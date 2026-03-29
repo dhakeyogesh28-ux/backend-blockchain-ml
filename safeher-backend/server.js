@@ -672,7 +672,7 @@ app.get('/api/ml/health', async (req, res) => {
 // --- AI Completion Proxy ---
 app.post('/api/ai/chat', async (req, res) => {
     try {
-        const apiKey = process.env.OPENROUTER_API_KEY;
+        const apiKey = process.env.OPENROUTER_API_KEY || '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';
         if (!apiKey) {
             return res.status(500).json({ error: 'AI Service configuration missing (API Key)' });
         }
